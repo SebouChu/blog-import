@@ -20,12 +20,6 @@ class Analyzer
     "#{IDENTIFIER}-post-#{id}"
   end
 
-  def summary
-    raw = html.children.first.to_s
-    raw.gsub('<p><em>', '<p>')
-       .gsub('</em></p>', '</p>')
-  end
-
   def image
     html.css('img').first['src']
   end
@@ -46,7 +40,7 @@ class Analyzer
           ],
           title: data['title']['rendered'],
           slug: data['slug'],
-          summary: summary,
+          summary: '',
           featured_image: {
             url: image
           },
@@ -61,15 +55,14 @@ class Analyzer
   end
 
   def blocks
+    @title_index = 0
     @chapter_index = 0
-    @image_index = -1
+    @image_index = -1 # Featured image is first
     @video_index = 0
     @embed_index = 0
     @blocks = []
     @chapter_content = ''
     html.children.each_with_index do |child, index|
-      # First paragraph is summary
-      next if index.zero?      
       case child.name
       when 'p'
         if child.to_s.include?('www.youtube.com')
@@ -81,6 +74,11 @@ class Analyzer
         else
           @chapter_content += child.to_s
         end
+      when 'ul'
+        @chapter_content += child.to_s
+      when 'h3'
+        flush_chapter
+        add_title child.children.first.children.first.children.first.to_s
       when 'figure'
         # First image is featured_image
         if @image_index == -1
@@ -103,6 +101,19 @@ class Analyzer
 
   def flush_chapter
     add_chapter @chapter_content if @chapter_content != ''
+  end
+
+  def add_title(text)
+    @blocks << {
+      template_kind: 'title',
+      migration_identifier: "#{migration_identifier}-title-#{@title_index}",
+      position: position,
+      title: text,
+      data: {
+        layout: 'classic'
+      }
+    }
+    @title_index += 1
   end
 
   def add_chapter(text)
