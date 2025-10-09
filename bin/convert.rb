@@ -78,7 +78,7 @@ class Analyzer
         @chapter_content += child.to_s
       when 'h3'
         flush_chapter
-        add_title child.children.first.children.first.children.first.to_s
+        add_title child.text
       when 'figure'
         # First image is featured_image
         if @image_index == -1
