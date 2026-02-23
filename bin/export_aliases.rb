@@ -23,6 +23,8 @@ def export_path(path)
   puts "Export path #{path}"
   file = File.read path
   object = JSON.parse file
+
+  # Restrict to migration identifiers and aliases attributes
   post = {
     migration_identifier: object['migration_identifier'],
     localizations: object['localizations'].map { |iso_code, l10n|
@@ -35,6 +37,7 @@ def export_path(path)
       ]
     }.to_h
   }
+
   data = {
     body: {
       posts: [
